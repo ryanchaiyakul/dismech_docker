@@ -1,1 +1,0 @@
-docker run --rm --volume "$(pwd)":/app dismesh python3 /app/slinky.py
