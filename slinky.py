@@ -5,21 +5,47 @@ from pathlib import Path
 from functools import partial
 
 
-# For thetas if necessary
-def parallel_transport(u: np.ndarray, t0: np.ndarray, t1: np.ndarray) -> np.ndarray:
-    b = np.cross(t0, t1)
-    d = np.dot(t0, t1)
-    denom = 1.0 + d + 1e-8
-    b_cross_u = np.cross(b, u)
-    return u + b_cross_u + np.cross(b, b_cross_u) / denom
+def extract_n_nodes(qs: np.ndarray, n: int) -> np.ndarray:
+    """
+    Extracts N equidistant nodes along the centerline using arc-length interpolation.
 
+    Args:
+        qs (np.ndarray): The full array of vertex positions (V x 3).
+        n (int): The number of nodes to extract.
 
-def extract_triplet(qs: np.ndarray) -> np.ndarray:
-    return np.concatenate([qs[0], [0.0], np.mean(qs, axis=0), [0.0], qs[-1]])
+    Returns:
+        np.ndarray: A flattened array of [node_0, theta_0, node_1, theta_1, ..., node_n].
+    """
+    if n < 2:
+        raise ValueError("Number of extracted nodes (n) must be at least 2.")
+
+    # 1. Calculate cumulative arc length (s) of the discrete curve
+    segments = np.diff(qs, axis=0)
+    lengths = np.linalg.norm(segments, axis=1)
+    s = np.concatenate(([0.0], np.cumsum(lengths)))
+
+    # 2. Define target arc lengths for N evenly spaced points
+    s_target = np.linspace(0.0, s[-1], n)
+
+    # 3. Interpolate x, y, and z coordinates independently
+    nodes = np.zeros((n, 3))
+    for i in range(3):
+        nodes[:, i] = np.interp(s_target, s, qs[:, i])
+
+    # 4. Interleave nodes with theta=0.0
+    result = []
+    for i in range(n - 1):
+        result.extend(nodes[i])
+        result.append(0.0)
+    result.extend(nodes[-1])
+
+    return np.array(result)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run slinky simulation in DER.")
+    parser.add_argument("--name", type=str, default="out", help="output file prefix.")
+    parser.add_argument("--n", type=int, default=3, help="Number of centerline nodes.")
     parser.add_argument("--radius", type=float, default=5e-3, help="Radius of the rod")
     parser.add_argument("--young_mod", type=float, default=1e7, help="Young's Modulus")
     parser.add_argument("--density", type=float, default=1273.52, help="Density")
@@ -61,7 +87,7 @@ if __name__ == "__main__":
 
     # Constants
     sim_params.integrator = py_dismech.BACKWARD_EULER
-    vertices = np.loadtxt(Path(__file__).parent / "vertices/slinky_save.txt")
+    vertices = np.loadtxt(Path(__file__).parent / "slinky_save.txt")
     gravity = np.array([0.0, 0.0, -9.81])
     damping = np.array([2.0])
     velocity_tolerance = 1e-3
@@ -98,11 +124,8 @@ if __name__ == "__main__":
     )
 
     sim_manager.initialize([])
-    qs = []
-    idx_b = [0, 1, 2, 3, 7, 8, 9, 10]
-    xb_m = [[0.0, 0.0, 0.0, 0.0, 0.0, *final_disp]]
-    xb_c = [0.0, 0.0, 0.0, 0.0, 0.0, 0.2, 0.0, 0.0]
     raw = []
+    qs = []
 
     def step_until_static() -> None:
         """Progress simulation until |v| < v_tol or iters > max_settle_steps.
@@ -114,7 +137,7 @@ if __name__ == "__main__":
             sim_manager.step_simulation()
             if np.linalg.norm(helix.getVelocities()) < velocity_tolerance:
                 vertices = helix.getVertices()
-                qs.append(extract_triplet(vertices))
+                qs.append(extract_n_nodes(vertices, args.n))
                 raw.append(vertices)
                 break
 
@@ -141,10 +164,7 @@ if __name__ == "__main__":
         step_until_static()
 
     np.savez(
-        "/app/out.npz",
+        f"/app/{args.name}.npz",
         raw=np.asarray(raw),
         qs=np.asarray(qs),
-        idx_b=idx_b,
-        xb_m=xb_m,
-        xb_c=xb_c,
     )
