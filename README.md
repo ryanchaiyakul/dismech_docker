@@ -1,10 +1,14 @@
-## Quick Start
+## Dismech Docker
+
+![Docker Image](https://img.shields.io/badge/Container-GHCR-blue?logo=github&logoColor=white)
+
+### Quick Start
 
 The container entrypoint is [mcp_server.py](mcp_server.py), which exposes the `run_slinky_simulation` tool over stdio. To run the MCP server:
 
 ```bash
-docker build -t dismesh .
-docker run --rm --volume "$(pwd)":/app dismesh
+docker pull ghcr.io/ryanchaiyakul/dismech_docker:latest
+docker run -i --rm -v "/$(pwd)/output://app/output" dismech # Tested on Git Bash
 ```
 
 Then, connect via an MCP client (such as the [Node.js MCP client library](https://github.com/modelcontextprotocol/sdk-python) or Claude Desktop with MCP config) and call:
@@ -23,11 +27,11 @@ Then, connect via an MCP client (such as the [Node.js MCP client library](https:
 }
 ```
 
-The output `.npz` file will be written to `/app/output` inside the container, which maps to your workspace directory when using the volume mount.
+The output `my_sim.npz` file will be written to `/app/output` inside the container, which maps to your workspace directory when using the volume mount.
 
 The shared scenario implementation lives under [sim/scenarios](sim/scenarios), which is the place to add new simulation cases without changing the entrypoints.
 
-## Adding A Scenario
+### Adding A Scenario
 
 1. Create a new module under [sim/scenarios](sim/scenarios), for example [sim/scenarios/new_case.py](sim/scenarios/new_case.py).
 2. Put the scenario config and a `run_<name>()` function in that module, following the pattern in [sim/scenarios/slinky.py](sim/scenarios/slinky.py).
