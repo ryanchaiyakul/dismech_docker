@@ -8,7 +8,7 @@ The container entrypoint is [mcp_server.py](mcp_server.py), which exposes the `r
 
 ```bash
 docker pull ghcr.io/ryanchaiyakul/dismech_docker:latest
-docker run -i --rm -v "/$(pwd)/output://app/output" dismech # Tested on Git Bash
+docker run -i --rm -v "/$(pwd)/output://app/output" ghcr.io/ryanchaiyakul/dismech_docker # Tested on Git Bash
 ```
 
 Then, connect via an MCP client (such as the [Node.js MCP client library](https://github.com/modelcontextprotocol/sdk-python) or Claude Desktop with MCP config) and call:
