@@ -1,0 +1,26 @@
+[project]
+name = "dismech-docker"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "ryanchaiyakul", email = "ryanchaiyakul@gmail.com" }
+]
+requires-python = ">=3.10"
+dependencies = ["fastmcp"]
+
+[project.scripts]
+dismech-mcp-server = "dismech_docker.server:main"
+
+[build-system]
+requires = ["uv_build>=0.10.0,<0.11.0"]
+build-backend = "uv_build"
+
+[tool.pyright]
+extraPaths = ["stubs"]
+
+[tool.mypy]
+mypy_path = "stubs"
+
+[tool.ty.environment]
+extra-paths = ["stubs"]
