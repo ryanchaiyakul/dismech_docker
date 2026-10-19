@@ -1,7 +1,7 @@
 [project]
 name = "dismech-docker"
 version = "0.1.0"
-description = "Add your description here"
+description = "Minimal MCP server for running py_dismech scripts"
 readme = "README.md"
 authors = [
     { name = "ryanchaiyakul", email = "ryanchaiyakul@gmail.com" }
